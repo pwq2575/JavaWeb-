@@ -93,6 +93,14 @@ mvn spring-boot:run
 # 接口文档：http://localhost:8080/swagger-ui.html
 ```
 
+> **我的机器上已装好 Maven 3.9.9**（`C:\Users\Lenovo\tools\apache-maven-3.9.9`，已加入用户 PATH）。
+> 如果新开的终端仍提示 `mvn 不是可运行的程序`：说明该窗口是在安装前打开的，**关掉重开**即可；
+> 不想重开就在当前窗口先执行：
+> ```powershell
+> $env:Path += ";C:\Users\Lenovo\tools\apache-maven-3.9.9\bin"
+> mvn -v   # 应显示 Apache Maven 3.9.9
+> ```
+
 ### 4.3 前端（5173）
 
 ```powershell
