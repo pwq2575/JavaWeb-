@@ -1,0 +1,46 @@
+# ---- 系统 ----
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# ---- 环境与密钥 ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+
+# ---- Java / Maven ----
+target/
+*.class
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+.idea/
+*.iml
+out/
+.mvn/timing.properties
+dependency-reduced-pom.xml
+
+# ---- Node / 前端 ----
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+pnpm-debug.log*
+npm-debug.log*
+yarn-error.log*
+
+# ---- 工具缓存 ----
+.eslintcache
+.stylelintcache
+coverage/
+.nyc_output/
+
+# ---- 临时目录（本地探测/导出）----
+.tmp/
+probe/
