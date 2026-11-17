@@ -1,0 +1,50 @@
+server:
+  port: ${APP_PORT:8080}
+
+spring:
+  application:
+    name: ers-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/ers?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USER:ers_app}
+    password: ${DB_PASSWORD:Pwq@123456}
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: always
+  mvc:
+    problemdetails:
+      enabled: false
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deletedAt
+      logic-delete-value: "now()"
+      logic-not-delete-value: "null"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+app:
+  jwt:
+    # 生产环境必须通过环境变量 JWT_SECRET 覆盖；长度 >= 32 字节
+    secret: ${JWT_SECRET:ers-dev-secret-key-please-change-in-production-0123456789}
+    ttl-hours: ${JWT_TTL_HOURS:2}
+  cors:
+    allowed-origins: ${APP_CORS_ORIGIN:http://localhost:5173}
+
+logging:
+  level:
+    root: info
+    com.ers: debug

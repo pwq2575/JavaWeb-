@@ -57,9 +57,10 @@
 │  ├─ *-部署运行手册-*.md
 │  ├─ *-测试计划与用例-*.md
 │  └─ *-文档索引与缺口清单-*.md
-├─ ers-backend/           # 后端（规划中）
-│  └─ src/main/java/com/ers/{controller,service,mapper,entity,dto,vo,security,config,common}
-├─ ers-web/               # 前端（规划中）
+├─ ers-backend/           # 后端（✅ 骨架已建，认证模块跑通）
+│  ├─ pom.xml             # Spring Boot 3.2.5 / Java 17 / MyBatis-Plus / JWT
+│  └─ src/main/java/com/ers/{common,config,security,auth,user}
+├─ ers-web/               # 前端（规划中，Vue 3 + Vite + Element Plus）
 │  └─ src/{api,router,stores,views,components,utils}
 └─ .env.example           # 环境变量模板
 ```
@@ -76,11 +77,11 @@ mysql -uroot -p -e "CREATE DATABASE IF NOT EXISTS ers CHARACTER SET utf8mb4 COLL
 mysql -uroot -p -e "CREATE USER IF NOT EXISTS 'ers_app'@'localhost' IDENTIFIED BY '<你的密码>';"
 mysql -uroot -p -e "GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,ALTER,INDEX,DROP,REFERENCES ON ers.* TO 'ers_app'@'localhost'; FLUSH PRIVILEGES;"
 
-# 导入（mysql 客户端读不了中文路径 → 先复制到 ASCII 临时路径）
-Copy-Item .\db\schema.sql "$env:TEMP\ers_schema.sql" -Force
-Copy-Item .\db\data.sql   "$env:TEMP\ers_data.sql"   -Force
-mysql -uers_app -p ers -e "source $env:TEMP/ers_schema.sql"
-mysql -uers_app -p ers -e "source $env:TEMP/ers_data.sql"
+# 导入（mysql 客户端读不了中文绝对路径 → 切到 db 目录后用相对文件名，实测可用）
+cd db
+mysql -uers_app -p --default-character-set=utf8mb4 ers -e "source schema.sql"
+mysql -uers_app -p --default-character-set=utf8mb4 ers -e "source data.sql"
+cd ..
 ```
 
 ### 4.2 后端（8080）
@@ -112,6 +113,21 @@ pnpm dev
 | zhaoliu | 123456 | 普通用户 | 持有资产 |
 
 > 密码由后端 `DataInitializer` 在首次启动时把 `__DEMO__` 替换为 BCrypt 密文；正式部署请修改。
+
+### 4.5 后端验证（已实测通过）
+
+```powershell
+# 1) 登录：返回 code=0、token、user（有效期 7200 秒）
+curl.exe -s -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{\"username\":\"admin\",\"password\":\"123456\"}'
+
+# 2) 带令牌取当前用户
+curl.exe -s http://localhost:8080/api/auth/me -H "Authorization: Bearer <上一步的 token>"
+
+# 3) 不带令牌访问 /api/auth/me → HTTP 401 + {"code":40100,...}
+# 4) 密码错误 → HTTP 401 + {"code":40100,"message":"账号或密码错误"}
+```
+
+已验证项：登录签发 JWT、`/me` 鉴权、401 统一响应体、注册（密码强度与唯一性校验）、启动时种子密码 BCrypt 化。
 
 ---
 

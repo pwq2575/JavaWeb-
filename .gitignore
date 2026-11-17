@@ -44,3 +44,4 @@ coverage/
 # ---- 临时目录（本地探测/导出）----
 .tmp/
 probe/
+.tools/
