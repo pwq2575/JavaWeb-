@@ -45,3 +45,5 @@ coverage/
 .tmp/
 probe/
 .tools/
+.npm-cache/
+.pnpm-store/

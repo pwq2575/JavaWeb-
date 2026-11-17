@@ -212,7 +212,7 @@
 
 | 层 | 选型 | 说明 |
 |---|---|---|
-| 语言 / 构建 | Java 17 + Maven 3.9；Node 18 + pnpm | 后端 Java 单体，前端独立构建 |
+| 语言 / 构建 | Java 17 + Maven 3.9；Node 24 + npm | 后端 Java 单体，前端独立构建 |
 | 后端框架 | Spring Boot 3.2.x（内嵌 Spring MVC、Spring Core） | 课程列举的 Spring / Spring MVC / Spring Boot 由 Boot 统一承担 |
 | 持久层 | MyBatis-Plus 3.5（底层 MyBatis；单表 CRUD 用 Wrapper，多表与报表保留 XML） | 满足"灵活运用 MyBatis"，同时减少样板 SQL |
 | 鉴权 | Spring Security 6 + JWT（jjwt）+ BCrypt | 无状态令牌，前后端分离标配 |
@@ -223,11 +223,11 @@
 | 图表 | ECharts 5（按需引入） | 饼图 / 条图 |
 | 导出 | EasyExcel（后端生成，前端以 blob 下载） | — |
 | 测试 | JUnit 5 + Spring Boot Test + Mockito + MockMvc；接口冒烟用 Apifox 集合 | 对齐课程"集成测试"要求 |
-| 部署 | 前端 `pnpm build` → Nginx 静态托管；后端 `java -jar` | 单机可跑；开发期 Vite proxy 转发 `/api` |
+| 部署 | 前端 `npm run build` → Nginx 静态托管；后端 `java -jar` | 单机可跑；开发期 Vite proxy 转发 `/api` |
 
 - **不采用 JSP**：服务端渲染在组件化、路由、状态管理与前后端协作效率上均落后于 Vue 3 + Element Plus，且企业已无新建 JSP 页面（JSP 仅存在于存量维护），故按用户要求改前后端分离。
 - **不强制 Spring Cloud**：单体规模（23 个页面、6 个业务域）引入注册中心/网关/配置中心是负收益；答辩口径为"知悉微服务拆分，按交付规模选择单体"。若课程明确要求体现，可加 Spring Cloud Alibaba Nacos（注册中心）+ Spring Cloud Gateway（路由）做最小演示，业务代码不变。
-- **前后端同仓库并列**：`ers-backend/`（Maven）与 `ers-web/`（pnpm）；开发期前端 5173、后端 8080。
+- **前后端同仓库并列**：`ers-backend/`（Maven）与 `ers-web/`（npm）；开发期前端 5173、后端 8080。
 
 ### 7.2 分层架构
 
@@ -267,7 +267,7 @@ ers-web  (src)
 ### 7.4 交付物与运行
 
 - 建表脚本 `db/schema.sql` + 演示数据 `db/data.sql`（含种子 admin、示例资产、场地与投票活动）。
-- 运行：后端 `mvn spring-boot:run`（8080，接口文档 `/swagger-ui.html`）；前端 `pnpm dev`（5173，proxy 到 8080）、`pnpm build`（产物 `dist/` 由 Nginx 托管）；数据库连接见 `application.yml`。
+- 运行：后端 `mvn spring-boot:run`（8080，接口文档 `/swagger-ui.html`）；前端 `npm run dev`（5173，proxy 到 8080）、`npm run build`（产物 `dist/` 由 Nginx 托管）；数据库连接见 `application.yml`。
 - 集成测试：借出→续借→转交→归还、场地并发防重、信誉扣分与阈值限制、采购审批、投票唯一性各至少 1 条 MockMvc 冒烟用例；关键 service 用 Mockito 单测。
 
 ## 8. 安全要求 (Security)

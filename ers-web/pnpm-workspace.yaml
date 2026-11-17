@@ -1,0 +1,4 @@
+# pnpm 11+ 设置位置（package.json 的 pnpm 字段已不再读取）
+onlyBuiltDependencies:
+  - esbuild
+  - vue-demi

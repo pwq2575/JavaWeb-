@@ -1,0 +1,181 @@
+/* ============================================================
+   ERS Design Tokens — 取自《视觉方案》D1「Signal Ledger 信号台账」
+   仅覆盖 Element Plus 主题变量 + 少量布局变量，不逐页写魔法值
+   ============================================================ */
+:root {
+  /* 品牌与语义色 */
+  --el-color-primary: #2b5ce6;
+  --el-color-primary-light-3: #5c82ee;
+  --el-color-primary-light-5: #8aa6f4;
+  --el-color-primary-light-7: #b8c9f9;
+  --el-color-primary-light-8: #cfdafb;
+  --el-color-primary-light-9: #e6ecfd;
+  --el-color-primary-dark-2: #2249b8;
+  --el-color-success: #0a7a57;
+  --el-color-success-light-9: #e6f2ee;
+  --el-color-warning: #a85b00;
+  --el-color-warning-light-9: #fdf2e5;
+  --el-color-danger: #b3261e;
+  --el-color-danger-light-9: #fbeae9;
+  --el-color-error: #b3261e;
+  --el-color-info: #6b7688;
+
+  /* 文本与背景 */
+  --el-text-color-primary: #141b2d;
+  --el-text-color-regular: #3c4659;
+  --el-text-color-secondary: #6b7688;
+  --el-text-color-placeholder: #9aa3b2;
+  --el-border-color: #dfe3ea;
+  --el-border-color-light: #e8ebf1;
+  --el-border-color-lighter: #eef1f6;
+  --el-bg-color-page: #f5f7fa;
+  --el-bg-color: #ffffff;
+  --el-fill-color-light: #f7f9fc;
+
+  /* 圆角、字号、字体 */
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-font-size-base: 14px;
+  --el-font-family: 'Sora', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --ers-font-mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+
+  /* 布局 */
+  --ers-sidebar-bg: #101a2e;
+  --ers-sidebar-text: #c8d0de;
+  --ers-sidebar-active: #2b5ce6;
+  --ers-header-h: 56px;
+  --ers-sidebar-w: 232px;
+  --ers-radius-card: 12px;
+  --ers-shadow-card: 0 1px 2px rgba(20, 27, 45, 0.06), 0 8px 24px rgba(20, 27, 45, 0.04);
+
+  /* 动效 */
+  --ers-ease: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --ers-dur-fast: 120ms;
+  --ers-dur-standard: 180ms;
+  --ers-dur-enter: 240ms;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--el-bg-color-page);
+  color: var(--el-text-color-primary);
+  font-family: var(--el-font-family);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 数字统一等宽，表格金额/日期不跳动 */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--ers-font-mono);
+}
+
+.ers-card {
+  background: #fff;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--ers-radius-card);
+  box-shadow: var(--ers-shadow-card);
+}
+
+.ers-page {
+  padding: 20px 24px 32px;
+}
+
+.ers-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ers-page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ers-page-sub {
+  margin: 4px 0 0;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+
+.ers-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.ers-pager {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 16px;
+}
+
+.ers-muted {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.ers-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.ers-kpi {
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--ers-radius-card);
+}
+
+.ers-kpi-label {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ers-kpi-value {
+  margin-top: 6px;
+  font-size: 26px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.ers-kpi-value.is-warn {
+  color: var(--el-color-warning);
+}
+
+.ers-kpi-value.is-danger {
+  color: var(--el-color-danger);
+}
+
+/* 列表页四段式：筛选 → 工具栏 → 表格 → 分页 */
+.ers-table-card {
+  background: #fff;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--ers-radius-card);
+  overflow: hidden;
+}
+
+.el-table th.el-table__cell {
+  background: #f7f9fc;
+  color: var(--el-text-color-secondary);
+  font-weight: 500;
+}

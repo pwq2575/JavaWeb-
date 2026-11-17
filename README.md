@@ -60,8 +60,8 @@
 ├─ ers-backend/           # 后端（✅ 10 个模块 / 53 个接口全部实现，接口冒烟 78/78 通过）
 │  ├─ pom.xml             # Spring Boot 3.2.5 / Java 17 / MyBatis-Plus / JWT / EasyExcel
 │  └─ src/main/java/com/ers/{common,config,security,auth,user,asset,transfer,credit,room,procurement,vote,admin,export,job}
-├─ ers-web/               # 前端（规划中，Vue 3 + Vite + Element Plus）
-│  └─ src/{api,router,stores,views,components,utils}
+├─ ers-web/               # 前端（✅ Vue 3 + Vite + Element Plus，20 个页面/组件全部实现，构建通过）
+│  └─ src/{api,router,stores,views,utils,styles,layout}
 └─ .env.example           # 环境变量模板
 ```
 
@@ -117,10 +117,36 @@ mvn spring-boot:run
 
 ```powershell
 cd ers-web
-pnpm install
-pnpm dev
-# http://localhost:5173  （Vite proxy 将 /api 转发到 8080）
+npm install          # 首次；包已锁定 package-lock.json
+npm run dev          # http://localhost:5173  （Vite proxy 将 /api 转发到 8080）
+npm run build        # 生产构建，产物在 ers-web/dist（Nginx 托管）
 ```
+
+> 本项目用 **npm** 安装依赖（pnpm 在本机会因沙箱/缓存路径报 `stack overflow`）。
+> `ers-web/.npmrc` 里的 `node-linker` 等键只对 pnpm 有意义，npm 会打印 warning，无影响。
+> 如遇 `esbuild spawn EPERM`，说明 node 子进程被安全软件拦截，关闭拦截或在普通终端重跑即可。
+
+前端页面清单（与 IA §4 一一对应）：
+
+| 区域 | 路由 | 页面 |
+|---|---|---|
+| 公共 | `#/login`、`#/register` | 登录（含演示账号一键填充）、注册 |
+| 员工 | `#/home` | 我的工作台：4 KPI + 在借 + 待审批转交 |
+| 员工 | `#/assets`、`#/assets/:id` | 资产台账（四段式列表）、资产详情（状态卡 + 时间线 + 动作栏） |
+| 员工 | `#/transfers` | 转交审批（incoming/outgoing、同意/驳回） |
+| 员工 | `#/rooms` | 场地预约（18 切片网格、我的预约） |
+| 员工 | `#/procurements` | 采购申请（提交/审批/删除已驳回） |
+| 员工 | `#/votes`、`#/votes/:id` | 投票列表（卡片）、投票详情（投前隐藏票数） |
+| 员工 | `#/my/borrows`、`#/my/credit` | 我的借用（续借/归还/导出）、我的信誉（流水） |
+| 管理 | `#/admin/dashboard` | 看板：8 KPI + 4 图（类别价值/状态分布/借用趋势/场地使用） |
+| 管理 | `#/admin/assets` | 资产 CRUD + 停用/启用 + 导出台账 |
+| 管理 | `#/admin/users` | 用户 CRUD + 重置密码 |
+| 管理 | `#/admin/rooms` | 场地 CRUD |
+| 管理 | `#/admin/config` | 策略配置（信誉阈值/高价值阈值/借期/续借上限） |
+
+> **前端状态**：`npm run build` 已通过（2266 个模块，dist 约 2.7 MB，已按 vue / element-plus / echarts 分包）；
+> `node scripts/check-sfc.mjs` 对 20 个 SFC + 6 个 JS 做语法校验全通过。
+> 本机若命令被沙箱拦截，可在普通终端执行 `npm run dev` 后浏览器验证。
 
 ### 4.4 演示账号
 
