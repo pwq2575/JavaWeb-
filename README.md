@@ -101,6 +101,18 @@ mvn spring-boot:run
 > mvn -v   # 应显示 Apache Maven 3.9.9
 > ```
 
+启动成功后控制台会打印（Spring Boot 自身不输出地址，这里由 `ErsApplication.startupBanner` 补上）：
+
+```
+====================================================================
+  ERS 后端启动完成  (profile: dev)
+  应用地址     : http://localhost:8080
+  接口文档     : http://localhost:8080/swagger-ui.html
+  OpenAPI JSON : http://localhost:8080/v3/api-docs
+  停止服务     : Ctrl + C
+====================================================================
+```
+
 ### 4.3 前端（5173）
 
 ```powershell
