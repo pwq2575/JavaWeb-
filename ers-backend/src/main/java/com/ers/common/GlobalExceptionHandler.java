@@ -51,6 +51,34 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.fail(ApiCode.NOT_FOUND, "资源不存在"));
     }
 
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(
+            org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        return ResponseEntity.status(405)
+                .body(ApiResponse.fail(ApiCode.BAD_REQUEST, "请求方法不支持：" + ex.getMethod()));
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUnreadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.fail(ApiCode.BAD_REQUEST, "请求体格式不正确"));
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingParam(
+            org.springframework.web.bind.MissingServletRequestParameterException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.fail(ApiCode.BAD_REQUEST, "缺少必要参数：" + ex.getParameterName()));
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.fail(ApiCode.BAD_REQUEST, "参数格式不正确：" + ex.getName()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleOther(Exception ex) {
         log.error("未处理异常", ex);

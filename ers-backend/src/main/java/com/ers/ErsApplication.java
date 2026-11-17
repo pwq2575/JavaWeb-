@@ -8,11 +8,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * 企业资源调度与协同治理平台 (ERS) 后端入口。
  */
 @SpringBootApplication
+@EnableScheduling
 @MapperScan("com.ers.**.mapper")
 public class ErsApplication {
 

@@ -57,9 +57,9 @@
 │  ├─ *-部署运行手册-*.md
 │  ├─ *-测试计划与用例-*.md
 │  └─ *-文档索引与缺口清单-*.md
-├─ ers-backend/           # 后端（✅ 骨架已建，认证模块跑通）
-│  ├─ pom.xml             # Spring Boot 3.2.5 / Java 17 / MyBatis-Plus / JWT
-│  └─ src/main/java/com/ers/{common,config,security,auth,user}
+├─ ers-backend/           # 后端（✅ 10 个模块 / 53 个接口全部实现，接口冒烟 78/78 通过）
+│  ├─ pom.xml             # Spring Boot 3.2.5 / Java 17 / MyBatis-Plus / JWT / EasyExcel
+│  └─ src/main/java/com/ers/{common,config,security,auth,user,asset,transfer,credit,room,procurement,vote,admin,export,job}
 ├─ ers-web/               # 前端（规划中，Vue 3 + Vite + Element Plus）
 │  └─ src/{api,router,stores,views,components,utils}
 └─ .env.example           # 环境变量模板
@@ -148,6 +148,22 @@ curl.exe -s http://localhost:8080/api/auth/me -H "Authorization: Bearer <上一�
 ```
 
 已验证项：登录签发 JWT、`/me` 鉴权、401 统一响应体、注册（密码强度与唯一性校验）、启动时种子密码 BCrypt 化。
+
+### 4.6 后端接口冒烟（78 项全通过）
+
+| 模块 | 覆盖 | 结果 |
+|---|---|---|
+| 认证 | 5 个种子账号登录、无令牌 401、密码错误 401 | ✅ |
+| 资产 | 列表/关键字/状态/分类筛选、详情+流转记录、借出、高价值信誉拦截、续借 3 次上限、归还、管理端增删改停用 | ✅ |
+| 转交 | 发起、incoming 待办、防重复、非持有者 403、审批换人不换期、驳回 | ✅ |
+| 场地 | 3 间场地、18 切片/未来 14 天、重复订 409、超期 422、取消/使用时序、我的预约 | ✅ |
+| 采购 | 提交、同意、驳回（理由必填）、重复审批 409、软删除 | ✅ |
+| 投票 | 投前隐藏票数、投票、重复 409、关闭后 422、管理员草稿→发布→关闭 | ✅ |
+| 我的 | 借用记录、预约、信誉分与阈值、工作台聚合 | ✅ |
+| 管理端 | 看板 KPI/趋势/分布、用户 CRUD+重置密码、场地 CRUD、阈值配置校验 | ✅ |
+| 导出 | 资产台账 xlsx（管理员）、个人借用记录、越权 403 | ✅ |
+
+> 冒烟脚本在本机 `.tmp/smoke_all.ps1`（未入库）。重置数据的顺序见《部署运行手册》第 6 节：先 `schema.sql` 再 `data.sql`，**必须先启动应用**让 `DataInitializer` 把 `__DEMO__` 转成 BCrypt。
 
 ---
 
