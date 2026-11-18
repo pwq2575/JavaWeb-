@@ -34,10 +34,10 @@ public class TransferController {
         this.transferService = transferService;
     }
 
-    @Operation(summary = "发起转交（B 向当前持有者 A 发起）")
+    @Operation(summary = "申请接手（B 向当前持有者 A 发起转交申请）")
     @PostMapping
     public ApiResponse<TransferVO> create(@Valid @RequestBody TransferCreateRequest req) {
-        return ApiResponse.ok(transferService.create(req, UserContext.requireUserId(), UserContext.isAdmin()));
+        return ApiResponse.ok(transferService.create(req, UserContext.requireUserId()));
     }
 
     @Operation(summary = "我的转交（box=incoming 待我审批 / outgoing 我发起的）")

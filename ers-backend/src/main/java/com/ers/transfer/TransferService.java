@@ -54,24 +54,21 @@ public class TransferService {
     // ------------------------------------------------------------------ 发起
 
     @Transactional
-    public TransferVO create(TransferCreateRequest req, Long currentUserId, boolean admin) {
+    public TransferVO create(TransferCreateRequest req, Long currentUserId) {
         Asset asset = assetMapper.selectById(req.assetId());
         if (asset == null) {
             throw new BizException(ApiCode.NOT_FOUND, "资产不存在");
         }
         if (!Const.AssetStatus.BORROWED.equals(asset.getStatus()) || asset.getHolderId() == null) {
-            throw new BizException(ApiCode.UNPROCESSABLE, "该资产当前未借出，无法转交");
+            throw new BizException(ApiCode.UNPROCESSABLE, "该资产当前未借出，无需申请接手");
         }
         Long holderId = asset.getHolderId();
-        if (!admin && !holderId.equals(currentUserId)) {
-            throw new BizException(ApiCode.FORBIDDEN, "只有当前持有者可以发起转交");
+        if (holderId.equals(currentUserId)) {
+            throw new BizException(ApiCode.UNPROCESSABLE, "你正持有该资产，无需申请接手");
         }
-        if (holderId.equals(req.toUserId())) {
-            throw new BizException(ApiCode.UNPROCESSABLE, "不能转交给自己");
-        }
-        SysUser to = userMapper.selectById(req.toUserId());
-        if (to == null || Integer.valueOf(0).equals(to.getStatus())) {
-            throw new BizException(ApiCode.BAD_REQUEST, "接收人不存在或已停用");
+        SysUser applicant = userMapper.selectById(currentUserId);
+        if (applicant == null || Integer.valueOf(0).equals(applicant.getStatus())) {
+            throw new BizException(ApiCode.FORBIDDEN, "当前账号不可用，无法申请接手");
         }
         Long pending = transferMapper.selectCount(Wrappers.<TransferRequest>lambdaQuery()
                 .eq(TransferRequest::getAssetId, asset.getId())
@@ -80,15 +77,16 @@ public class TransferService {
             throw new BizException(ApiCode.CONFLICT, "该资产已有待审批的转交申请");
         }
 
+        // from_user_id = 当前持有者 A（审批人）；to_user_id = 申请人 B（接手人）
         TransferRequest t = new TransferRequest();
         t.setAssetId(asset.getId());
         t.setFromUserId(holderId);
-        t.setToUserId(req.toUserId());
+        t.setToUserId(currentUserId);
         t.setStatus(Const.TransferStatus.PENDING);
         t.setApplyReason(req.applyReason() == null ? null : req.applyReason().trim());
         t.setCreatedAt(LocalDateTime.now());
         transferMapper.insert(t);
-        return toVO(t, asset, nameOf(holderId), nameOf(req.toUserId()));
+        return toVO(t, asset, nameOf(holderId), nameOf(currentUserId));
     }
 
     // ------------------------------------------------------------------ 查询
@@ -96,9 +94,10 @@ public class TransferService {
     public TransferPageVO list(String box, String status, long page, long size, Long currentUserId) {
         LambdaQueryWrapper<TransferRequest> qw = Wrappers.<TransferRequest>lambdaQuery();
         if ("outgoing".equalsIgnoreCase(box)) {
-            qw.eq(TransferRequest::getFromUserId, currentUserId);
+            // 我发起的：我是接手人（to_user_id = 我），等待持有者 A 审批
+            qw.eq(TransferRequest::getToUserId, currentUserId);
         } else {
-            // 默认 incoming：待我审批（我是当前持有者）
+            // 默认 incoming：待我审批（我是当前持有者，from_user_id = 我）
             qw.eq(TransferRequest::getFromUserId, currentUserId);
             if (status == null || status.isBlank()) {
                 qw.eq(TransferRequest::getStatus, Const.TransferStatus.PENDING);

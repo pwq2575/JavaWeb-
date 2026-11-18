@@ -3,7 +3,7 @@
     <div class="ers-page-head">
       <div>
         <h1 class="ers-page-title">转交审批</h1>
-        <p class="ers-page-sub">转交由当前持有者审批；同意后换人不换归还日，逾期计时持续</p>
+        <p class="ers-page-sub">同事申请接手你手中的资产时，由你确认；同意后换人不换归还日，逾期责任随之转移</p>
       </div>
       <el-button :icon="Refresh" @click="load">刷新</el-button>
     </div>
@@ -11,7 +11,7 @@
     <div class="ers-table-card">
       <div class="ers-toolbar">
         <el-radio-group v-model="box" @change="search">
-          <el-radio-button value="incoming">待我审批（{{ pendingCount }}）</el-radio-button>
+          <el-radio-button value="incoming">待我确认（{{ pendingCount }}）</el-radio-button>
           <el-radio-button value="outgoing">我发起的</el-radio-button>
         </el-radio-group>
         <el-select v-model="status" placeholder="状态" clearable style="width: 140px" @change="search">
@@ -28,14 +28,14 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="转交路径" min-width="170">
+        <el-table-column label="持有者 → 申请人" min-width="170">
           <template #default="{ row }">
             <span>{{ row.fromUserName }}</span>
             <el-icon class="arrow"><Right /></el-icon>
             <span>{{ row.toUserName }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="原因" min-width="180" show-overflow-tooltip>
+        <el-table-column label="申请说明" min-width="180" show-overflow-tooltip>
           <template #default="{ row }">{{ row.applyReason || '—' }}</template>
         </el-table-column>
         <el-table-column label="状态" width="110">
@@ -52,7 +52,7 @@
           <template #default="{ row }">
             <span v-if="row.status === 'REJECTED'" class="ers-muted">驳回理由：{{ row.rejectReason || '未填写' }}</span>
             <span v-else-if="row.decidedAt" class="tabular ers-muted">{{ formatDateTime(row.decidedAt) }}</span>
-            <span v-else class="ers-muted">等待审批</span>
+            <span v-else class="ers-muted">{{ box === 'incoming' ? '等待你确认' : '等待对方确认' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
@@ -65,7 +65,7 @@
           </template>
         </el-table-column>
         <template #empty>
-          <el-empty :description="box === 'incoming' ? '当前没有待我审批的转交' : '你还没有发起过转交'" :image-size="80" />
+          <el-empty :description="box === 'incoming' ? '当前没有待你确认的接手申请' : '你还没有发起过接手申请'" :image-size="80" />
         </template>
       </el-table>
 
@@ -82,18 +82,18 @@
       </div>
     </div>
 
-    <el-dialog v-model="approveVisible" title="确认接受转交" width="420px">
+    <el-dialog v-model="approveVisible" title="确认对方接手" width="440px">
       <p class="dialog-text">
-        确认从 <strong>{{ current?.fromUserName }}</strong> 处接收「{{ current?.assetName }}」？<br />
-        同意后你将变为持有人，<strong>应归还日不变</strong>，逾期风险由你承担。
+        <strong>{{ current?.toUserName }}</strong> 申请接手「{{ current?.assetName }}」。<br />
+        同意后持有人变为 <strong>{{ current?.toUserName }}</strong>，<strong>应归还日不变</strong>，后续逾期责任由对方承担；你将不再持有该资产。
       </p>
       <template #footer>
         <el-button @click="approveVisible = false">取消</el-button>
-        <el-button type="primary" :loading="acting" @click="confirmApprove">确认接收</el-button>
+        <el-button type="primary" :loading="acting" @click="confirmApprove">确认同意</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="rejectVisible" title="驳回转交" width="420px">
+    <el-dialog v-model="rejectVisible" title="驳回接手申请" width="440px">
       <el-form label-position="top">
         <el-form-item label="驳回理由（必填，1-100 字）">
           <el-input v-model="rejectReason" type="textarea" :rows="3" maxlength="100" show-word-limit />
@@ -159,7 +159,7 @@ async function confirmApprove() {
   acting.value = true
   try {
     await transferApi.approve(current.value.id)
-    ElMessage.success('已接受转交，你现在是持有人')
+    ElMessage.success(`已同意，${current.value.toUserName} 成为新持有人`)
     approveVisible.value = false
     load()
   } finally {

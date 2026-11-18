@@ -26,6 +26,8 @@ public record AssetVO(
         boolean canBorrow,
         boolean canRenew,
         boolean canReturn,
+        /** 资产被他人借出且无待审批申请时，当前用户可「申请接手」（B 向持有者 A 发起转交）。 */
+        boolean canApplyTransfer,
         Long pendingTransferId,
         LocalDateTime createdAt) {
 }

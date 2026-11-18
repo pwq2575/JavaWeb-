@@ -30,7 +30,7 @@
       <div class="ers-kpi">
         <div class="ers-kpi-label">待我处理</div>
         <div class="ers-kpi-value tabular">{{ data.pendingApprovals }}</div>
-        <div class="ers-muted">转交审批 {{ data.todoTransferList?.length || 0 }} 条 · 我的预约 {{ data.myReservations }} 条</div>
+        <div class="ers-muted">待确认接手 {{ data.todoTransferList?.length || 0 }} 条 · 我的预约 {{ data.myReservations }} 条</div>
       </div>
     </div>
 
@@ -55,17 +55,17 @@
 
       <div class="ers-card panel">
         <div class="panel-head">
-          <h2>待我审批的转交（{{ data.todoTransferList?.length || 0 }}）</h2>
+          <h2>待我确认的接手申请（{{ data.todoTransferList?.length || 0 }}）</h2>
           <el-link type="primary" :underline="false" @click="$router.push('/transfers')">去处理</el-link>
         </div>
-        <el-empty v-if="!data.todoTransferList?.length" description="没有待审批的转交申请" :image-size="72" />
+        <el-empty v-if="!data.todoTransferList?.length" description="没有待确认的接手申请" :image-size="72" />
         <ul v-else class="list">
           <li v-for="item in data.todoTransferList" :key="item.transferId" class="list-item">
             <div class="li-main">
               <span class="li-title">{{ item.assetName }}</span>
-              <span class="ers-muted">转交给 {{ item.toUserName }} · {{ formatTime(item.createdAt) }}</span>
+              <span class="ers-muted">{{ item.toUserName }} 申请接手 · {{ formatTime(item.createdAt) }}</span>
             </div>
-            <el-button size="small" type="primary" plain @click="$router.push('/transfers')">审批</el-button>
+            <el-button size="small" type="primary" plain @click="$router.push('/transfers')">去确认</el-button>
           </li>
         </ul>
       </div>

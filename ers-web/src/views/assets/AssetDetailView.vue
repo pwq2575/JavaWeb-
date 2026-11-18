@@ -22,8 +22,8 @@
     <div v-if="pendingTransfer" class="ers-alert">
       <el-icon><InfoFilled /></el-icon>
       <span>
-        {{ pendingTransfer.fromUserName }} 申请转交给 {{ pendingTransfer.toUserName }}，
-        原因：{{ pendingTransfer.applyReason || '未填写' }}（等待 {{ pendingTransfer.fromUserName }} 审批）
+        {{ pendingTransfer.toUserName }} 申请接手这件资产（现持有者 {{ pendingTransfer.fromUserName }}），
+        原因：{{ pendingTransfer.applyReason || '未填写' }}；等待 {{ pendingTransfer.fromUserName }} 确认
       </span>
     </div>
 
@@ -97,12 +97,12 @@
           >归还</el-button>
 
           <el-button
-            v-if="asset.canReturn"
+            v-if="asset.canApplyTransfer"
             plain
             size="large"
             class="action"
-            @click="openTransfer"
-          >发起转交</el-button>
+            @click="openApply"
+          >申请接手</el-button>
 
           <p class="ers-muted hint">
             借期固定 3 天；续借每次 +1 天、最多 3 次；资产逾期每日扣 5 分，续借成功即停止扣分。
@@ -112,28 +112,33 @@
         <div class="ers-card section">
           <h2>流转规则</h2>
           <ul class="rules">
-            <li>转交由当前持有者审批，同意后换人不换归还日。</li>
-            <li>存在待审批转交时，不能续借、不能重复发起转交。</li>
+            <li>接手由你发起、当前持有者确认；同意后换人不换归还日，逾期责任随之转移。</li>
+            <li>存在待确认申请时，持有者不能续借、不能重复申请接手。</li>
             <li>信誉分低于阈值时不可借出高价值资产（本件{{ asset.highValue ? '为' : '非' }}高价值）。</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <el-dialog v-model="transferVisible" title="发起转交" width="440px">
+    <el-dialog v-model="transferVisible" title="申请接手" width="440px">
       <el-form :model="transferForm" label-position="top">
-        <el-form-item label="转交给">
-          <el-select v-model="transferForm.toUserId" filterable placeholder="选择接收人" style="width: 100%">
-            <el-option v-for="user in users" :key="user.id" :label="`${user.realName}（${user.username}）`" :value="user.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="转交原因（可选）">
-          <el-input v-model="transferForm.applyReason" type="textarea" :rows="3" maxlength="200" show-word-limit />
+        <el-form-item label="申请说明（可选，最多 200 字）">
+          <el-input
+            v-model="transferForm.applyReason"
+            type="textarea"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+            placeholder="例如：下周出差需要这台笔记本，麻烦你确认一下"
+          />
         </el-form-item>
       </el-form>
+      <p class="dialog-tip">
+        提交后由当前持有者 <strong>{{ asset.holderName }}</strong> 确认；同意后你成为持有人，<strong>应归还日不变</strong>。
+      </p>
       <template #footer>
         <el-button @click="transferVisible = false">取消</el-button>
-        <el-button type="primary" :loading="acting" @click="submitTransfer">提交转交申请</el-button>
+        <el-button type="primary" :loading="acting" @click="submitTransfer">提交申请</el-button>
       </template>
     </el-dialog>
   </div>
@@ -144,7 +149,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, InfoFilled } from '@element-plus/icons-vue'
-import { assetApi, transferApi, userApi } from '@/api'
+import { assetApi, transferApi } from '@/api'
 import { ASSET_STATUS, dictLabel, dictType, formatDateTime, formatMoney } from '@/utils/dict'
 
 const route = useRoute()
@@ -157,8 +162,7 @@ const asset = ref({})
 const records = ref([])
 const pendingTransfer = ref(null)
 const transferVisible = ref(false)
-const users = ref([])
-const transferForm = reactive({ toUserId: null, applyReason: '' })
+const transferForm = reactive({ applyReason: '' })
 
 async function load() {
   loading.value = true
@@ -208,32 +212,19 @@ async function returnAsset() {
   }
 }
 
-async function openTransfer() {
+async function openApply() {
   transferVisible.value = true
-  if (!users.value.length) {
-    try {
-      users.value = await userApi.options()
-    } catch {
-      users.value = []
-    }
-  }
 }
 
 async function submitTransfer() {
-  if (!transferForm.toUserId) {
-    ElMessage.warning('请选择接收人')
-    return
-  }
   acting.value = true
   try {
     await transferApi.create({
       assetId: asset.value.id,
-      toUserId: transferForm.toUserId,
       applyReason: transferForm.applyReason || undefined
     })
-    ElMessage.success('转交申请已提交，等待当前持有者审批')
+    ElMessage.success('申请已提交，等待当前持有者确认')
     transferVisible.value = false
-    transferForm.toUserId = null
     transferForm.applyReason = ''
     load()
   } finally {
@@ -339,6 +330,13 @@ onMounted(load)
   color: var(--el-text-color-regular);
   font-size: 13px;
   line-height: 1.9;
+}
+
+.dialog-tip {
+  margin: 4px 0 0;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+  line-height: 1.7;
 }
 
 .ers-alert {

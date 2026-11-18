@@ -417,12 +417,13 @@ public class AssetService {
         boolean canRenew = borrowed && isHolder && used < max && pendingTransferId == null;
         boolean canReturn = borrowed && (isHolder || viewerAdmin);
         boolean canBorrow = Const.AssetStatus.IN_STOCK.equals(a.getStatus()) && viewerId != null;
+        boolean canApplyTransfer = borrowed && viewerId != null && !isHolder && pendingTransferId == null;
         BigDecimal value = a.getValue() == null ? BigDecimal.ZERO : a.getValue();
         boolean high = value.compareTo(BigDecimal.valueOf(configService.highValueThreshold())) >= 0;
         String holderName = a.getHolderId() == null ? null : names.get(a.getHolderId());
         return new AssetVO(a.getId(), a.getCode(), a.getName(), a.getCategory(), value, a.getStatus(),
                 a.getHolderId(), holderName, a.getBorrowAt(), a.getDueDate(), used,
                 daysLeft, overdue, a.getDescription(), high, canBorrow, canRenew, canReturn,
-                pendingTransferId, a.getCreatedAt());
+                canApplyTransfer, pendingTransferId, a.getCreatedAt());
     }
 }

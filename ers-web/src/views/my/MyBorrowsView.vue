@@ -43,7 +43,7 @@
           <template #default="{ row }">
             <el-button v-if="row.canRenew" link type="primary" @click="renew(row)">续借</el-button>
             <el-button v-if="row.canReturn" link type="warning" @click="returnAsset(row)">归还</el-button>
-            <span v-if="row.pendingTransferId" class="ers-muted">转交待审批</span>
+            <span v-if="row.pendingTransferId" class="ers-muted">有接手申请待处理</span>
           </template>
         </el-table-column>
         <template #empty><el-empty description="当前没有在借资产" :image-size="80" /></template>

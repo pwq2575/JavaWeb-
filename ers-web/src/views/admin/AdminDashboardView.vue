@@ -43,7 +43,7 @@
           <strong class="tabular">{{ data.pendingProcurements }}</strong>
         </div>
         <div class="todo-item" @click="$router.push('/transfers')">
-          <span class="ers-muted">转交待审批</span>
+          <span class="ers-muted">接手申请待确认</span>
           <strong class="tabular">{{ data.pendingTransfers }}</strong>
         </div>
         <div class="todo-item" @click="$router.push('/admin/users')">
@@ -87,7 +87,7 @@ const kpis = computed(() => [
   { label: '在库', value: data.inStock, hint: '可借用', tone: 'ok' },
   { label: '借出中', value: data.borrowed, hint: '含逾期', tone: '' },
   { label: '逾期未还', value: data.overdue, hint: '每日 -5 分', tone: 'danger' },
-  { label: '待审批转交', value: data.pendingTransfers, hint: '换人不换期', tone: 'warn' },
+  { label: '待确认接手', value: data.pendingTransfers, hint: '换人不换期', tone: 'warn' },
   { label: '待审批采购', value: data.pendingProcurements, hint: '二态审批', tone: 'warn' },
   { label: '用户总数', value: data.totalUsers, hint: '含管理员', tone: '' },
   { label: '低信誉用户', value: data.lowCreditUsers, hint: '低于阈值', tone: 'danger' }
