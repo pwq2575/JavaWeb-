@@ -227,6 +227,7 @@ curl.exe -s http://localhost:8080/api/auth/me -H "Authorization: Bearer <上一�
 
 ## 7. 开发约定
 
+- **文档优先（D-01 教训）**：业务语义一律以 `docs/..._PRD.md` 与 `docs/...-API接口契约` 为唯一权威。实现任何「谁发起 / 谁审批 / 谁可见」类动作前，先回读对应章节并在开发日志写一句结论，再动代码与前端文案；若文档与需求冲突，先提确认、改文档，再改代码。
 - 分支：`main` 保护；功能分支 `feat/xxx`。
 - 提交：`feat|fix|docs|chore: 描述`。
 - 接口变更先改 `docs/...-API接口契约`，再写代码。
