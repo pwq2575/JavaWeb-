@@ -46,3 +46,8 @@ logging:
   level:
     root: info
     com.ers: debug
+  charset:
+    # 中文 Windows 控制台默认代码页 936（GBK）；Spring Boot 默认用 UTF-8 写控制台，
+    # 在 IDEA 终端/CMD 里会显示成乱码，这里跟随系统代码页。
+    # 若终端已执行 chcp 65001（UTF-8），用 LOG_CONSOLE_CHARSET=UTF-8 覆盖即可。
+    console: ${LOG_CONSOLE_CHARSET:GBK}

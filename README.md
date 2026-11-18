@@ -113,17 +113,19 @@ mvn spring-boot:run
 ====================================================================
 ```
 
+> **中文日志乱码**：中文 Windows 控制台代码页是 936（GBK），而 Spring Boot 默认用 UTF-8 写控制台。项目已在 `application.yml` 的 `logging.charset.console` 默认设为 `GBK`（可用环境变量 `LOG_CONSOLE_CHARSET` 覆盖）。若你的终端是 UTF-8（执行过 `chcp 65001`），启动前设 `LOG_CONSOLE_CHARSET=UTF-8`。
+
 ### 4.3 前端（5173）
 
 ```powershell
-cd ers-web
-npm install          # 首次；包已锁定 package-lock.json
-npm run dev          # http://localhost:5173  （Vite proxy 将 /api 转发到 8080）
-npm run build        # 生产构建，产物在 ers-web/dist（Nginx 托管）
+cd ers-web            # 必须先进 ers-web！在仓库根目录跑 npm 会报 ENOENT: package.json
+npm install           # 首次；包已锁定 package-lock.json
+npm run dev           # http://localhost:5173  （Vite proxy 将 /api 转发到 8080）
+npm run build         # 生产构建，产物在 ers-web/dist（Nginx 托管）
 ```
 
-> 本项目用 **npm** 安装依赖（pnpm 在本机会因沙箱/缓存路径报 `stack overflow`）。
-> `ers-web/.npmrc` 里的 `node-linker` 等键只对 pnpm 有意义，npm 会打印 warning，无影响。
+> **统一用 npm，不要用 pnpm**：本机 pnpm 会在依赖链接阶段报 `stack overflow` 或 `ERR_PNPM_IGNORED_BUILDS`（esbuild/vue-demi 构建脚本被拦），已移除 `pnpm-lock.yaml`、`pnpm-workspace.yaml` 与 `.npmrc`。若之前用 pnpm 装过，先删掉 `ers-web/node_modules` 再 `npm install`。
+> npm 12 会提示 `install-scripts ... blocked`（esbuild 的二进制来自 `@esbuild/win32-x64` 可选依赖，不影响构建/启动，可忽略）。
 > 如遇 `esbuild spawn EPERM`，说明 node 子进程被安全软件拦截，关闭拦截或在普通终端重跑即可。
 
 前端页面清单（与 IA §4 一一对应）：
