@@ -26,5 +26,7 @@ public class Procurement {
     private String approveNote;
     private LocalDateTime createdAt;
     private LocalDateTime decidedAt;
+    /** 自审标记：审批人 = 申请人时置 1（权限矩阵 §6 / PRD Q8、D8），供审计查询。 */
+    private Integer selfApproved;
     private LocalDateTime deletedAt;
 }

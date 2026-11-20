@@ -52,22 +52,22 @@ public class ProcurementController {
         return ApiResponse.ok(procurementService.create(req, UserContext.requireUserId()));
     }
 
-    @Operation(summary = "同意入库（管理员；仅改状态，不写资产台账）")
+    @Operation(summary = "同意入库（管理员；仅改状态，不写资产台账；自审需 selfReview=true）")
     @PutMapping("/{id}/approve")
     public ApiResponse<ProcurementVO> approve(@PathVariable Long id,
             @RequestBody(required = false) ProcurementDecideRequest req) {
         requireAdmin();
         return ApiResponse.ok(procurementService.approve(id, req == null ? null : req.approveNote(),
-                UserContext.requireUserId()));
+                req == null ? null : req.selfReview(), UserContext.requireUserId()));
     }
 
-    @Operation(summary = "驳回（管理员；理由必填）")
+    @Operation(summary = "驳回（管理员；理由必填；自审需 selfReview=true）")
     @PutMapping("/{id}/reject")
     public ApiResponse<ProcurementVO> reject(@PathVariable Long id,
             @RequestBody(required = false) ProcurementDecideRequest req) {
         requireAdmin();
         return ApiResponse.ok(procurementService.reject(id, req == null ? null : req.approveNote(),
-                UserContext.requireUserId()));
+                req == null ? null : req.selfReview(), UserContext.requireUserId()));
     }
 
     /**

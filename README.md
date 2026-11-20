@@ -195,7 +195,7 @@ curl.exe -s http://localhost:8080/api/auth/me -H "Authorization: Bearer <上一�
 
 > 冒烟脚本在本机 `.tmp/smoke_all.ps1`（未入库）。重置数据的顺序见《部署运行手册》第 6 节：先 `schema.sql` 再 `data.sql`，**必须先启动应用**让 `DataInitializer` 把 `__DEMO__` 转成 BCrypt。
 
-### 4.7 后端自动化回归（MockMvc，21 个测试类 / 79 断言）
+### 4.7 后端自动化回归（`mvn test`，56 例 / 17 个测试类）
 
 同一批断言已迁移为可入库的集成测试，跑在独立库 `ers_test` 上，**不会写演示库 `ers`**：
 
@@ -221,9 +221,10 @@ mvn -f ers-backend/pom.xml test      # 沙箱内需加 -Dmaven.repo.local=...\.t
 | `transfer/TransferServiceTest`（纯 Mockito） | 11 | 申请/审批/驳回守卫与 `from=A、to=B` 落库约定 |
 | `asset/AssetFilterTest` | 4 | `holderId`/`overdue`/`highValueOnly`/`sort` 筛选与排序 |
 | `procurement/ProcurementAuthzTest` | 2 | 采购审批仅管理员可操作（越权 403） |
+| `procurement/ProcurementSelfApprovalTest` | 4 | 自审未勾选 422 / 勾选后 `selfApproved=true` / 审批他人不置位 / 自审驳回同样需勾选 |
 | `auth/TokenInvalidationTest` | 2 | 账号停用后旧令牌立即失效 |
 
-共 52 个 `@Test`（29 个 MockMvc + 23 个纯单测），`mvn test` 全绿。
+共 56 个 `@Test`（33 个 MockMvc + 23 个纯单测），`mvn test` 全绿。
 
 一键回归（后端全量测试 + 前端构建，自动带上本机必需的 `-Dmaven.repo.local` 与 `ESBUILD_BINARY_PATH`）：
 

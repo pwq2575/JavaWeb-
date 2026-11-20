@@ -68,8 +68,8 @@
         <el-table-column prop="reserveDate" label="日期" width="120">
           <template #default="{ row }"><span class="tabular">{{ row.reserveDate }}</span></template>
         </el-table-column>
-        <el-table-column prop="timeSlot" label="时段" width="160">
-          <template #default="{ row }"><span class="tabular">{{ slotLabel(row.timeSlot) }}</span></template>
+        <el-table-column prop="slotLabel" label="时段" width="160">
+          <template #default="{ row }"><span class="tabular">{{ row.slotLabel }}</span></template>
         </el-table-column>
         <el-table-column label="状态" width="110">
           <template #default="{ row }">
@@ -118,15 +118,6 @@ function disabledDate(d) {
   const max = new Date(today)
   max.setDate(max.getDate() + bookableDays.value - 1)
   return target < today || target > max
-}
-
-function slotLabel(timeSlot) {
-  const start = 9 + Math.floor(timeSlot / 2)
-  const minute = timeSlot % 2 === 0 ? '00' : '30'
-  const endTotal = 9 * 60 + (timeSlot + 1) * 30
-  const endH = String(Math.floor(endTotal / 60)).padStart(2, '0')
-  const endM = String(endTotal % 60).padStart(2, '0')
-  return `${String(start).padStart(2, '0')}:${minute}-${endH}:${endM}`
 }
 
 function slotClass(slot) {
@@ -192,7 +183,7 @@ async function onSlotClick(slot) {
 }
 
 async function cancel(row) {
-  await ElMessageBox.confirm(`确认取消 ${row.reserveDate} ${slotLabel(row.timeSlot)} 的预约？`, '取消预约', {
+  await ElMessageBox.confirm(`确认取消 ${row.reserveDate} ${row.slotLabel} 的预约？`, '取消预约', {
     confirmButtonText: '确认取消',
     cancelButtonText: '再想想'
   })
@@ -204,7 +195,7 @@ async function cancel(row) {
 
 function canUse(row) {
   const start = new Date(`${row.reserveDate}T09:00:00`)
-  start.setMinutes(start.getMinutes() + row.timeSlot * 30)
+  start.setMinutes(start.getMinutes() + row.slot * 30)
   return new Date() >= start
 }
 

@@ -199,6 +199,7 @@ CREATE TABLE procurement (
   approve_note VARCHAR(200)    NULL                  COMMENT '审批备注；驳回时必填',
   created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '提交时间',
   decided_at   DATETIME        NULL                  COMMENT '审批时间',
+  self_approved TINYINT(1)     NOT NULL DEFAULT 0    COMMENT '自审标记：审批人=申请人时为 1（权限矩阵 §6、PRD Q8/D8）',
   deleted_at   DATETIME        NULL                  COMMENT '逻辑删除（仅已驳回可删）',
   PRIMARY KEY (id),
   KEY idx_proc_status (status, deleted_at),

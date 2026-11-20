@@ -38,9 +38,10 @@
         <el-table-column label="提交时间" width="150">
           <template #default="{ row }"><span class="tabular">{{ formatDateTime(row.createdAt) }}</span></template>
         </el-table-column>
-        <el-table-column label="审批信息" min-width="200">
+        <el-table-column label="审批信息" min-width="220">
           <template #default="{ row }">
-            <span v-if="row.status === 'PENDING'" class="ers-muted">等待审批</span>
+            <el-tag v-if="row.selfApproved" type="warning" effect="light" size="small" style="margin-right: 6px">自审</el-tag>
+            <span v-if="row.status === 'PENDING'" class="ers-muted">等待审批{{ isSelf(row) ? '（申请人 = 审批人，需勾选自审）' : '' }}</span>
             <span v-else-if="row.status === 'REJECTED'" class="ers-muted">驳回理由：{{ row.approveNote || '未填写' }}</span>
             <span v-else class="ers-muted">{{ formatDateTime(row.decidedAt) }} 已同意</span>
           </template>
@@ -97,10 +98,26 @@
         <el-form-item label="驳回理由（必填）">
           <el-input v-model="rejectNote" type="textarea" :rows="3" maxlength="200" show-word-limit />
         </el-form-item>
+        <el-form-item v-if="isSelf(current)">
+          <el-checkbox v-model="selfReview">我确认这是自审（申请人 = 审批人）</el-checkbox>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="rejectVisible = false">取消</el-button>
         <el-button type="danger" :loading="acting" @click="confirmReject">确认驳回</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="selfVisible" title="自审确认" width="440px">
+      <p class="ers-muted" style="margin-top: 0">
+        这张申请是<b>你自己提交</b>的。按权限矩阵，管理员可以审批自己的申请，但必须确认这是一次自审，系统会记录 <code>self_approved</code> 供审计。
+      </p>
+      <el-checkbox v-model="selfReview">我确认这是自审（申请人 = 审批人）</el-checkbox>
+      <template #footer>
+        <el-button @click="selfVisible = false">取消</el-button>
+        <el-button type="primary" :loading="acting" :disabled="!selfReview" @click="confirmSelfApprove">
+          确认同意入库
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -125,6 +142,8 @@ const status = ref('')
 const keyword = ref('')
 const createVisible = ref(false)
 const rejectVisible = ref(false)
+const selfVisible = ref(false)
+const selfReview = ref(false)
 const formRef = ref()
 const current = ref(null)
 const rejectNote = ref('')
@@ -175,7 +194,18 @@ async function submit() {
   }
 }
 
+function isSelf(row) {
+  return Boolean(row && auth.user && row.applicantId === auth.user.id)
+}
+
 async function approve(row) {
+  // 自审（申请人 = 审批人）走显式勾选弹窗，避免误批自己的单；其余仍用轻确认。
+  if (isSelf(row)) {
+    current.value = row
+    selfReview.value = false
+    selfVisible.value = true
+    return
+  }
   await ElMessageBox.confirm(`确认同意「${row.title}」的采购申请？`, '审批确认', {
     confirmButtonText: '同意入库',
     cancelButtonText: '取消'
@@ -185,9 +215,26 @@ async function approve(row) {
   load()
 }
 
+async function confirmSelfApprove() {
+  if (!selfReview.value) {
+    ElMessage.warning('请勾选「自审确认」')
+    return
+  }
+  acting.value = true
+  try {
+    await procurementApi.approve(current.value.id, { selfReview: true })
+    ElMessage.success('已同意（已记录自审）')
+    selfVisible.value = false
+    load()
+  } finally {
+    acting.value = false
+  }
+}
+
 function openReject(row) {
   current.value = row
   rejectNote.value = ''
+  selfReview.value = false
   rejectVisible.value = true
 }
 
@@ -196,9 +243,16 @@ async function confirmReject() {
     ElMessage.warning('请填写驳回理由')
     return
   }
+  if (isSelf(current.value) && !selfReview.value) {
+    ElMessage.warning('驳回自己的申请需勾选「自审确认」')
+    return
+  }
   acting.value = true
   try {
-    await procurementApi.reject(current.value.id, { approveNote: rejectNote.value.trim() })
+    await procurementApi.reject(current.value.id, {
+      approveNote: rejectNote.value.trim(),
+      selfReview: isSelf(current.value) ? true : undefined
+    })
     ElMessage.success('已驳回')
     rejectVisible.value = false
     load()

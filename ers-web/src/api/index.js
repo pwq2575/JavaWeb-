@@ -44,7 +44,7 @@ export const roomApi = {
 export const procurementApi = {
   list: (params) => request.get('/procurements', { params }),
   create: (data) => request.post('/procurements', data),
-  approve: (id) => request.put(`/procurements/${id}/approve`),
+  approve: (id, data) => request.put(`/procurements/${id}/approve`, data),
   reject: (id, data) => request.put(`/procurements/${id}/reject`, data),
   remove: (id) => request.delete(`/procurements/${id}`)
 }

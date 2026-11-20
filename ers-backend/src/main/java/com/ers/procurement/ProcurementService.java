@@ -91,19 +91,19 @@ public class ProcurementService {
     }
 
     @Transactional
-    public ProcurementVO approve(Long id, String note, Long approverId) {
+    public ProcurementVO approve(Long id, String note, Boolean selfReview, Long approverId) {
         Procurement p = requirePending(id);
-        applyDecision(p, Const.ProcurementStatus.APPROVED, note, approverId);
+        applyDecision(p, Const.ProcurementStatus.APPROVED, note, selfReview, approverId);
         return toVO(p, namesOf(p), approverId);
     }
 
     @Transactional
-    public ProcurementVO reject(Long id, String note, Long approverId) {
+    public ProcurementVO reject(Long id, String note, Boolean selfReview, Long approverId) {
         if (note == null || note.isBlank()) {
             throw new BizException(ApiCode.BAD_REQUEST, "请填写驳回理由");
         }
         Procurement p = requirePending(id);
-        applyDecision(p, Const.ProcurementStatus.REJECTED, note, approverId);
+        applyDecision(p, Const.ProcurementStatus.REJECTED, note, selfReview, approverId);
         return toVO(p, namesOf(p), approverId);
     }
 
@@ -134,12 +134,19 @@ public class ProcurementService {
 
     // ------------------------------------------------------------------ 内部
 
-    private void applyDecision(Procurement p, String status, String note, Long approverId) {
+    private void applyDecision(Procurement p, String status, String note, Boolean selfReview, Long approverId) {
+        // 自审（审批人 = 申请人）必须显式勾选，否则 422；勾选后落库 self_approved=1 供审计。
+        boolean self = approverId != null && approverId.equals(p.getApplicantId());
+        if (self && !Boolean.TRUE.equals(selfReview)) {
+            throw new BizException(ApiCode.UNPROCESSABLE, "审批自己提交的申请需勾选「自审确认」");
+        }
+        int selfApproved = self ? 1 : 0;
         int rows = procurementMapper.update(null, new LambdaUpdateWrapper<Procurement>()
                 .set(Procurement::getStatus, status)
                 .set(Procurement::getApproverId, approverId)
                 .set(Procurement::getApproveNote, note == null ? null : note.trim())
                 .set(Procurement::getDecidedAt, LocalDateTime.now())
+                .set(Procurement::getSelfApproved, selfApproved)
                 .eq(Procurement::getId, p.getId())
                 .eq(Procurement::getStatus, Const.ProcurementStatus.PENDING));
         if (rows == 0) {
@@ -149,6 +156,7 @@ public class ProcurementService {
         p.setApproverId(approverId);
         p.setApproveNote(note == null ? null : note.trim());
         p.setDecidedAt(LocalDateTime.now());
+        p.setSelfApproved(selfApproved);
     }
 
     private Procurement requirePending(Long id) {
@@ -181,7 +189,8 @@ public class ProcurementService {
         return new ProcurementVO(p.getId(), p.getTitle(), p.getReason(), p.getStatus(),
                 p.getApplicantId(), names.get(p.getApplicantId()),
                 p.getApproverId() == null ? null : names.get(p.getApproverId()),
-                p.getApproveNote(), p.getCreatedAt(), p.getDecidedAt(), canDelete);
+                p.getApproveNote(), p.getCreatedAt(), p.getDecidedAt(),
+                p.getSelfApproved() != null && p.getSelfApproved() == 1, canDelete);
     }
 
     private long clampSize(long size) {

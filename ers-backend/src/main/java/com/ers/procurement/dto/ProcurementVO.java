@@ -16,5 +16,6 @@ public record ProcurementVO(
         String approveNote,
         LocalDateTime createdAt,
         LocalDateTime decidedAt,
+        boolean selfApproved,
         boolean canDelete) {
 }
