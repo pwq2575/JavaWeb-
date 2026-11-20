@@ -219,8 +219,11 @@ mvn -f ers-backend/pom.xml test      # 沙箱内需加 -Dmaven.repo.local=...\.t
 | `job/CreditJobTest` | 1 | 逾期扣 5、同日幂等、下限 0 |
 | `asset/AssetServiceUnitTest`（纯 Mockito） | 12 | 借出/续借/归还守卫、信誉阈值、转交互斥 |
 | `transfer/TransferServiceTest`（纯 Mockito） | 11 | 申请/审批/驳回守卫与 `from=A、to=B` 落库约定 |
+| `asset/AssetFilterTest` | 4 | `holderId`/`overdue`/`highValueOnly`/`sort` 筛选与排序 |
+| `procurement/ProcurementAuthzTest` | 2 | 采购审批仅管理员可操作（越权 403） |
+| `auth/TokenInvalidationTest` | 2 | 账号停用后旧令牌立即失效 |
 
-共 44 个 `@Test`（21 个 MockMvc + 23 个纯单测），`mvn test` 全绿。
+共 52 个 `@Test`（29 个 MockMvc + 23 个纯单测），`mvn test` 全绿。
 
 一键回归（后端全量测试 + 前端构建，自动带上本机必需的 `-Dmaven.repo.local` 与 `ESBUILD_BINARY_PATH`）：
 

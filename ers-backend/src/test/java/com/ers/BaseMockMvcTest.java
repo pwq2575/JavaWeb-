@@ -82,9 +82,13 @@ public abstract class BaseMockMvcTest {
     // ---------------------------------------------------------------- HTTP 助手
 
     protected String token(String username) throws Exception {
+        return token(username, DEMO_PASSWORD);
+    }
+
+    protected String token(String username, String password) throws Exception {
         ResultActions ra = mvc.perform(post("/api/auth/login")
                 .contentType("application/json;charset=UTF-8")
-                .content("{\"username\":\"" + username + "\",\"password\":\"" + DEMO_PASSWORD + "\"}"));
+                .content("{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}"));
         JsonNode body = json(ra);
         assertThat(body.path("code").asInt())
                 .as("登录失败：%s -> %s", username, body.path("message").asText())

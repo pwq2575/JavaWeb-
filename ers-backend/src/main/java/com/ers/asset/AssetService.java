@@ -66,7 +66,8 @@ public class AssetService {
     // ------------------------------------------------------------------ 查询
 
     public PageResult<AssetVO> list(long page, long size, String keyword, String status, String category,
-                                    Long holderId, Long viewerId, boolean viewerAdmin) {
+                                    Long holderId, Boolean highValueOnly, Boolean overdue, String sort,
+                                    Long viewerId, boolean viewerAdmin) {
         LambdaQueryWrapper<Asset> qw = Wrappers.<Asset>lambdaQuery();
         if (keyword != null && !keyword.isBlank()) {
             String kw = keyword.trim();
@@ -81,7 +82,15 @@ public class AssetService {
         if (holderId != null) {
             qw.eq(Asset::getHolderId, holderId);
         }
-        qw.orderByAsc(Asset::getCode);
+        if (Boolean.TRUE.equals(highValueOnly)) {
+            qw.ge(Asset::getValue, BigDecimal.valueOf(configService.highValueThreshold()));
+        }
+        if (Boolean.TRUE.equals(overdue)) {
+            // 逾期 = 仍借出且应归还日早于今天（PRD 4.2(7) 的“是否逾期”筛选，含当日不逾期）
+            qw.eq(Asset::getStatus, Const.AssetStatus.BORROWED)
+                    .lt(Asset::getDueDate, LocalDate.now());
+        }
+        applySort(qw, sort);
 
         Page<Asset> p = assetMapper.selectPage(new Page<>(Math.max(1, page), Math.max(1, Math.min(size, 100))), qw);
         Map<Long, String> names = userNames(collectHolderIds(p.getRecords()));
@@ -91,6 +100,29 @@ public class AssetService {
             records.add(toVO(a, names, pending.get(a.getId()), viewerId, viewerAdmin));
         }
         return new PageResult<>(records, p.getTotal(), p.getCurrent(), p.getSize());
+    }
+
+    /**
+     * 排序白名单（API 契约 GET /assets：code / name / value / updated_at，格式 "字段,asc|desc"）。
+     * <p>缺省保持 code 升序（与历史行为一致，避免无意改变列表观感）；非法字段回退到 code 升序。</p>
+     */
+    private void applySort(LambdaQueryWrapper<Asset> qw, String sort) {
+        String key = "code";
+        boolean asc = true;
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            key = parts[0].trim();
+            if (parts.length > 1) {
+                asc = !"desc".equalsIgnoreCase(parts[1].trim());
+            }
+        }
+        switch (key) {
+            case "name" -> qw.orderBy(true, asc, Asset::getName);
+            case "value" -> qw.orderBy(true, asc, Asset::getValue);
+            case "updated_at", "updatedAt" -> qw.orderBy(true, asc, Asset::getUpdatedAt);
+            // 非法字段整体回退默认排序（忽略传入方向），避免出现"未知字段 + desc"这类意外顺序
+            default -> qw.orderBy(true, true, Asset::getCode);
+        }
     }
 
     public AssetDetailVO detail(Long id, Long viewerId, boolean viewerAdmin) {

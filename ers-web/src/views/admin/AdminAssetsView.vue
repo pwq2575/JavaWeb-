@@ -20,6 +20,10 @@
         <el-select v-model="query.category" placeholder="分类" clearable style="width: 140px">
           <el-option v-for="c in categories" :key="c" :label="c" :value="c" />
         </el-select>
+        <el-select v-model="query.holderId" placeholder="持有者" clearable filterable style="width: 150px">
+          <el-option v-for="u in holders" :key="u.id" :label="u.realName || u.username" :value="u.id" />
+        </el-select>
+        <el-checkbox v-model="query.overdue" style="margin-right: 4px">仅看逾期</el-checkbox>
         <el-button type="primary" :icon="Search" @click="search">查询</el-button>
         <el-button :icon="RefreshRight" @click="reset">重置</el-button>
       </div>
@@ -116,11 +120,12 @@ const acting = ref(false)
 const rows = ref([])
 const total = ref(0)
 const categories = ref([])
+const holders = ref([])
 const visible = ref(false)
 const editingId = ref(null)
 const formRef = ref(null)
 
-const query = reactive({ page: 1, size: 10, keyword: '', status: '', category: '' })
+const query = reactive({ page: 1, size: 10, keyword: '', status: '', category: '', holderId: null, overdue: false })
 const form = reactive({ code: '', name: '', category: '', value: 0, description: '' })
 
 const rules = {
@@ -137,7 +142,10 @@ async function load() {
       page: query.page,
       size: query.size,
       keyword: query.keyword || undefined,
-      status: query.status || undefined
+      status: query.status || undefined,
+      category: query.category || undefined,
+      holderId: query.holderId || undefined,
+      overdue: query.overdue ? true : undefined
     })
     rows.value = data.records || []
     total.value = data.total || 0
@@ -147,13 +155,18 @@ async function load() {
   }
 }
 
+async function loadHolders() {
+  const data = await adminApi.users({ page: 1, size: 100 })
+  holders.value = data.records || []
+}
+
 function search() {
   query.page = 1
   load()
 }
 
 function reset() {
-  Object.assign(query, { page: 1, keyword: '', status: '', category: '' })
+  Object.assign(query, { page: 1, keyword: '', status: '', category: '', holderId: null, overdue: false })
   load()
 }
 
@@ -213,7 +226,10 @@ async function exportExcel() {
   ElMessage.success('已开始下载')
 }
 
-onMounted(load)
+onMounted(async () => {
+  await loadHolders()
+  load()
+})
 </script>
 
 <style scoped>

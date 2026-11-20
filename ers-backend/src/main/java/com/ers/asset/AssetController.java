@@ -32,16 +32,20 @@ public class AssetController {
         this.assetService = assetService;
     }
 
-    @Operation(summary = "资产列表（分页 + 关键字/状态/分类筛选）")
+    @Operation(summary = "资产列表（分页 + 关键字/状态/分类/持有者/逾期/高价值筛选 + 排序白名单）")
     @GetMapping("/assets")
     public ApiResponse<PageResult<AssetVO>> list(
             @RequestParam(defaultValue = "1") long page,
             @RequestParam(defaultValue = "20") long size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String category) {
-        return ApiResponse.ok(assetService.list(page, size, keyword, status, category, null,
-                UserContext.userId(), UserContext.isAdmin()));
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Long holderId,
+            @RequestParam(required = false) Boolean overdue,
+            @RequestParam(required = false) Boolean highValueOnly,
+            @RequestParam(required = false) String sort) {
+        return ApiResponse.ok(assetService.list(page, size, keyword, status, category, holderId,
+                highValueOnly, overdue, sort, UserContext.userId(), UserContext.isAdmin()));
     }
 
     @Operation(summary = "资产详情（含流转时间线与待审批转交）")

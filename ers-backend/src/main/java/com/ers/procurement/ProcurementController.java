@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ers.common.ApiResponse;
+import com.ers.common.BizException;
 import com.ers.common.PageResult;
 import com.ers.procurement.dto.ProcurementCreateRequest;
 import com.ers.procurement.dto.ProcurementDecideRequest;
@@ -55,6 +56,7 @@ public class ProcurementController {
     @PutMapping("/{id}/approve")
     public ApiResponse<ProcurementVO> approve(@PathVariable Long id,
             @RequestBody(required = false) ProcurementDecideRequest req) {
+        requireAdmin();
         return ApiResponse.ok(procurementService.approve(id, req == null ? null : req.approveNote(),
                 UserContext.requireUserId()));
     }
@@ -63,8 +65,19 @@ public class ProcurementController {
     @PutMapping("/{id}/reject")
     public ApiResponse<ProcurementVO> reject(@PathVariable Long id,
             @RequestBody(required = false) ProcurementDecideRequest req) {
+        requireAdmin();
         return ApiResponse.ok(procurementService.reject(id, req == null ? null : req.approveNote(),
                 UserContext.requireUserId()));
+    }
+
+    /**
+     * 审批入口统一鉴权（API 契约 #29/#30：ADMIN）。
+     * <p>路径不在 /api/admin/** 下，Spring Security 只校验「已登录」，因此必须在此显式校验角色。</p>
+     */
+    private void requireAdmin() {
+        if (!UserContext.isAdmin()) {
+            throw BizException.forbidden("只有管理员可以审批采购申请");
+        }
     }
 
     @Operation(summary = "删除已驳回的本人申请")
