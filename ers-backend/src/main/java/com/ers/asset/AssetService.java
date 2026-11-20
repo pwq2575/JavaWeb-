@@ -95,9 +95,12 @@ public class AssetService {
 
     public AssetDetailVO detail(Long id, Long viewerId, boolean viewerAdmin) {
         Asset asset = requireAsset(id);
-        Map<Long, String> names = userNames(collectUserIds(asset));
+        List<AssetRecord> timeline = timeline(id);
+        // 时间线要显示“谁操作 / 转交给谁”，因此姓名集合必须覆盖记录里的 operator/target，
+        // 只收集 holderId 会让历史记录的 operatorName 为空（D-01 验收残留风险 1）。
+        Map<Long, String> names = userNames(collectUserIds(asset, timeline));
         List<AssetRecordVO> records = new ArrayList<>();
-        for (AssetRecord r : timeline(id)) {
+        for (AssetRecord r : timeline) {
             records.add(new AssetRecordVO(r.getId(), r.getAction(), r.getOperatorId(),
                     names.get(r.getOperatorId()), r.getTargetUserId(), names.get(r.getTargetUserId()),
                     r.getFromStatus(), r.getToStatus(), r.getRemark(), r.getHappenedAt()));
@@ -386,6 +389,20 @@ public class AssetService {
         List<Long> ids = new ArrayList<>();
         if (asset.getHolderId() != null) {
             ids.add(asset.getHolderId());
+        }
+        return ids;
+    }
+
+    /** 资产详情：holder + 时间线里出现过的所有人（操作者、转交目标）。 */
+    private List<Long> collectUserIds(Asset asset, List<AssetRecord> records) {
+        List<Long> ids = new ArrayList<>(collectUserIds(asset));
+        for (AssetRecord r : records) {
+            if (r.getOperatorId() != null) {
+                ids.add(r.getOperatorId());
+            }
+            if (r.getTargetUserId() != null) {
+                ids.add(r.getTargetUserId());
+            }
         }
         return ids;
     }

@@ -1,0 +1,32 @@
+# 测试专用配置（@ActiveProfiles("test") 生效）
+# 目标：绝不污染演示库 ers；所有集成测试只连 ers_test。
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ers_test?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ers_app
+    password: Pwq@123456
+  # 首次测试启动时建表 + 灌种子；与手动执行 db/schema.sql、db/data.sql 完全同源（不复制 SQL，避免漂移）
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+      schema-locations: file:../db/schema.sql
+      data-locations: file:../db/data.sql
+
+mybatis-plus:
+  configuration:
+    # 集成测试不打印每条 SQL，保持 surefire 输出可读
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+app:
+  jwt:
+    secret: ers-test-secret-key-0123456789-0123456789
+    ttl-hours: 2
+
+logging:
+  level:
+    root: warn
+    com.ers: info
+  charset:
+    console: UTF-8

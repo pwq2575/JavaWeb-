@@ -178,10 +178,17 @@ async function onSlotClick(slot) {
     '预约确认',
     { confirmButtonText: '确认预约', cancelButtonText: '取消' }
   )
-  await roomApi.book({ roomId: roomId.value, date: date.value, slot: slot.slot })
-  ElMessage.success('预约成功')
-  loadSlots()
-  loadMine()
+  try {
+    await roomApi.book({ roomId: roomId.value, date: date.value, slot: slot.slot })
+    ElMessage.success('预约成功')
+  } catch (e) {
+    // 冲突（409，后端文案“该时段已被预约，请刷新后重选”）等失败：提示已由 request.js 统一弹出，
+    // 这里静默处理并按 IA §7.6 自动刷新网格，让用户看到最新占用情况；
+    // 只刷新数据，不清空当前场地/日期等其它选择。
+  } finally {
+    loadSlots()
+    loadMine()
+  }
 }
 
 async function cancel(row) {

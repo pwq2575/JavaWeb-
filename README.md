@@ -13,8 +13,8 @@
 | 模块 | 普通用户 | 管理员 |
 |---|---|---|
 | 账号 | 注册、登录、查看个人资料 | 用户增删改查、重置密码、分配角色 |
-| 资产 | 浏览目录、借出、续借（≤3 次）、归还、发起转交 | 资产台账增删改查、导出 Excel |
-| 转交 | 审批他人的转交申请（我持有的资产） | 同左 + 代发起 |
+| 资产 | 浏览目录、借出、续借（≤3 次）、归还、申请接手（对他人持有的资产） | 资产台账增删改查、导出 Excel |
+| 转交 | B 申请接手 → 持有者 A 在「转交审批」确认（同意后换人不换归还日） | 同左；**无「代发起」**，审批权只属于当前持有者 |
 | 场地 | 单日 30 分钟切片预约、取消、标记已使用 | 场地增删改查 |
 | 采购 | 提交申请（名称 + 理由）、删除已驳回申请 | 同意入库 / 驳回 |
 | 投票 | 投票（每人一次不可改）、查看结果 | 创建草稿、发布、提前关闭 |
@@ -57,7 +57,7 @@
 │  ├─ *-部署运行手册-*.md
 │  ├─ *-测试计划与用例-*.md
 │  └─ *-文档索引与缺口清单-*.md
-├─ ers-backend/           # 后端（✅ 10 个模块 / 53 个接口全部实现，接口冒烟 78/78 通过）
+├─ ers-backend/           # 后端（✅ 10 个模块 / 53 个接口全部实现，接口冒烟 79/79 通过）
 │  ├─ pom.xml             # Spring Boot 3.2.5 / Java 17 / MyBatis-Plus / JWT / EasyExcel
 │  └─ src/main/java/com/ers/{common,config,security,auth,user,asset,transfer,credit,room,procurement,vote,admin,export,job}
 ├─ ers-web/               # 前端（✅ Vue 3 + Vite + Element Plus，20 个页面/组件全部实现，构建通过）
@@ -156,11 +156,13 @@ npm run build         # 生产构建，产物在 ers-web/dist（Nginx 托管）
 |---|---|---|---|
 | admin | 123456 | 管理员 | 全部管理功能 |
 | zhangsan | 123456 | 普通用户 | 正常借用、有转交待审批 |
-| lisi | 123456 | 普通用户 | 有逾期记录，信誉 85 |
+| lisi | 123456 | 普通用户 | 有逾期记录，信誉 85（启动后实为 75，见下） |
 | wangwu | 123456 | 普通用户 | 信誉 55，借高价值被拒的演示 |
 | zhaoliu | 123456 | 普通用户 | 持有资产 |
 
 > 密码由后端 `DataInitializer` 在首次启动时把 `__DEMO__` 替换为 BCrypt 密文；正式部署请修改。
+>
+> **启动后的实际信誉分**：种子数据里 asset1（张三，due 2026-11-19）与 asset3（李四，due 2026-11-14）已过期，服务启动时的逾期扫描会对持有人各扣 5 分，因此实际为 **zhangsan 90 / lisi 75**（另有爽约记录同样在启动时结算）。演示要"原始分数"时，请先重置库再当天演示；分数每天还会随逾期继续下降，这是业务规则而非缺陷（见开发日志 §7.2 L-03）。
 
 ### 4.5 后端验证（已实测通过）
 
@@ -177,13 +179,13 @@ curl.exe -s http://localhost:8080/api/auth/me -H "Authorization: Bearer <上一�
 
 已验证项：登录签发 JWT、`/me` 鉴权、401 统一响应体、注册（密码强度与唯一性校验）、启动时种子密码 BCrypt 化。
 
-### 4.6 后端接口冒烟（78 项全通过）
+### 4.6 后端接口冒烟（79 项全通过）
 
 | 模块 | 覆盖 | 结果 |
 |---|---|---|
 | 认证 | 5 个种子账号登录、无令牌 401、密码错误 401 | ✅ |
 | 资产 | 列表/关键字/状态/分类筛选、详情+流转记录、借出、高价值信誉拦截、续借 3 次上限、归还、管理端增删改停用 | ✅ |
-| 转交 | 发起、incoming 待办、防重复、非持有者 403、审批换人不换期、驳回 | ✅ |
+| 转交 | 申请接手（`{assetId, applyReason}`，接收人由令牌推出）、incoming 待办、持有者自申请 422、在库 422、防重复 409、非持有者审批 403、审批换人不换期、驳回后可再申请 | ✅ |
 | 场地 | 3 间场地、18 切片/未来 14 天、重复订 409、超期 422、取消/使用时序、我的预约 | ✅ |
 | 采购 | 提交、同意、驳回（理由必填）、重复审批 409、软删除 | ✅ |
 | 投票 | 投前隐藏票数、投票、重复 409、关闭后 422、管理员草稿→发布→关闭 | ✅ |
@@ -192,6 +194,68 @@ curl.exe -s http://localhost:8080/api/auth/me -H "Authorization: Bearer <上一�
 | 导出 | 资产台账 xlsx（管理员）、个人借用记录、越权 403 | ✅ |
 
 > 冒烟脚本在本机 `.tmp/smoke_all.ps1`（未入库）。重置数据的顺序见《部署运行手册》第 6 节：先 `schema.sql` 再 `data.sql`，**必须先启动应用**让 `DataInitializer` 把 `__DEMO__` 转成 BCrypt。
+
+### 4.7 后端自动化回归（MockMvc，21 个测试类 / 79 断言）
+
+同一批断言已迁移为可入库的集成测试，跑在独立库 `ers_test` 上，**不会写演示库 `ers`**：
+
+```bash
+mysql -uroot -p -e "CREATE DATABASE IF NOT EXISTS ers_test DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_0900_ai_ci; GRANT ALL ON ers_test.* TO 'ers_app'@'localhost';"
+mvn -f ers-backend/pom.xml test      # 沙箱内需加 -Dmaven.repo.local=...\.tools\m2repo
+```
+
+| 测试类（`ers-backend/src/test/java/com/ers/`） | 断言/用例 | 覆盖 |
+|---|---|---|
+| `auth/LoginSmokeTest` | 5 | 登录、401、密码错误 |
+| `room/RoomReservationSmokeTest` | 11 | 切片、重复 409、取消、使用、我的预约 |
+| `transfer/TransferSmokeTest` | 9 | 转交主链路、驳回、列表 |
+| `transfer/D01TransferSemanticsTest` | 7 | D-01 语义（申请/自申请 422/在库 422/重复 409/越权审批 403/换人不换期/驳回后再申请） |
+| `procurement/ProcurementSmokeTest` | 10 | 采购申请、审批、驳回、删除 |
+| `vote/VoteSmokeTest` | 14 | 投前隐藏、投票、重复、发布/关闭 |
+| `my/MyViewSmokeTest` | 3 | 借用、预约、信誉、工作台 |
+| `admin/AdminSmokeTest` | 21 | 看板、用户、场地、配置 |
+| `asset/AssetAdminSmokeTest` | 2 | 资产增改停用 |
+| `export/ExportSmokeTest` | 4 | 导出权限与文件类型 |
+| `job/CreditJobTest` | 1 | 逾期扣 5、同日幂等、下限 0 |
+| `asset/AssetServiceUnitTest`（纯 Mockito） | 12 | 借出/续借/归还守卫、信誉阈值、转交互斥 |
+| `transfer/TransferServiceTest`（纯 Mockito） | 11 | 申请/审批/驳回守卫与 `from=A、to=B` 落库约定 |
+
+共 44 个 `@Test`（21 个 MockMvc + 23 个纯单测），`mvn test` 全绿。
+
+一键回归（后端全量测试 + 前端构建，自动带上本机必需的 `-Dmaven.repo.local` 与 `ESBUILD_BINARY_PATH`）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ci.ps1
+```
+
+> 脚本退出码 0 = 两段都成功；日志写到 `.tmp\ci_backend.log` 与 `.tmp\ci_frontend.log`。`mvn` 的 `exit code` 在 PowerShell 管道下不可靠（日志 §6.13），脚本以日志中的 `BUILD SUCCESS` / `built in` 判定。
+
+隔离机制：`ers-backend/src/test/resources/application-test.yml` 把 datasource 指向 `ers_test`，`spring.sql.init` 直接复用 `../db/schema.sql` 与 `../db/data.sql`；`BaseMockMvcTest` 每个用例前重建种子态，并先断言 `select database()` 为 `ers_test` 才继续。
+
+### 4.8 三条典型操作路径（替代独立用户手册）
+
+**路径 A：借用 → 续借 → 归还**
+
+1. `#/login` 用 zhangsan/123456 登录 → `#/assets` → 选一件 `IN_STOCK` 资产（如 A-0202）→ 详情页「借出」。
+2. 成功判据：资产状态变 `BORROWED`、应归还日 = 今天 + 3 天、`#/my/borrows` 出现记录。
+3. 详情页或「我的借用」点「续借」→ 应归还日再 +3、续借次数 +1，满 3 次提示 422。
+4. 「归还」→ 状态回 `IN_STOCK`，流转记录多一条 `RETURN`。
+5. 反例：wangwu（信誉 55）借高价值资产（如 A-0201，3800 元）→ 40301「信誉分不足」。
+
+**路径 B：申请接手（B 申请、A 审批，即 D-01 定稿语义）**
+
+1. zhangsan 登录，打开李四持有的 A-0203（`#/assets/3`）→ 动作栏出现「申请接手」（仅"被他人借出"时出现）。
+2. 填说明提交 → 提示等待持有者确认；详情页出现「张三 申请接手这件资产（现持有者 李四）」。
+3. 换 lisi 登录 → `#/transfers` →「待我确认（1）」→「同意」。
+4. 回到 zhangsan：A-0203 的持有人变为张三，**应归还日不变**（2026-11-14），流转记录新增 1 条 `TRANSFER`（操作人李四、目标张三）。
+5. 反例：lisi 打开自己的资产没有「申请接手」按钮；同一资产在待审批期间再次提交 → 409。
+
+**路径 C：预约场地与 409 冲突处理**
+
+1. `#/rooms` 选场地 + 日期 → 点一个空闲切片 → 成功提示，切片变已预约。
+2. 换另一个账号在同一场地/日期/时段下单 → 409「该时段已被预约，请刷新后重选」。
+3. 前端自动刷新网格并**保留已选场地/日期**，直接改选其它切片即可。
+4. 取消：「我的预约」里取消后切片释放，可重新预订。
 
 ---
 
